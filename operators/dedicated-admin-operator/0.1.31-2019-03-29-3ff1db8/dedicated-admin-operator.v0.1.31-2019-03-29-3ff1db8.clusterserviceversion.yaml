@@ -1,0 +1,100 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    categories: A list of comma separated categories that your operator falls under.
+    certified: 'false'
+    containerImage: quay.io/redhat/dedicated-admin-operator:latest
+    createdAt: '2019-03-25T15:50:20Z'
+    description: OpenShift cluster provisioning and management at scale.
+    support: OSD SRE
+  name: dedicated-admin-operator.v0.1.31-2019-03-29-3ff1db8
+  namespace: openshift-dedicated-admin
+spec:
+  description: Operator to manage dedicated admins access
+  displayName: dedicated-admin-operator
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - ''
+          resources:
+          - namespaces
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ''
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          attributeRestrictions: null
+          resources:
+          - rolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        serviceAccountName: dedicated-admin-operator
+      deployments:
+      - name: dedicated-admin-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              k8s-app: dedicated-admin-operator
+          template:
+            metadata:
+              labels:
+                k8s-app: dedicated-admin-operator
+            spec:
+              containers:
+              - command:
+                - dedicated-admin-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  value: ''
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: dedicated-admin-operator
+                image: quay.io/redhat/dedicated-admin-operator:latest
+                imagePullPolicy: Always
+                name: dedicated-admin-operator
+                ports:
+                - containerPort: 60000
+                  name: metrics
+              serviceAccountName: dedicated-admin-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: false
+    type: AllNamespaces
+  keywords:
+  - kubernetes
+  - openshift
+  - multi-cluster
+  - cluster
+  maturity: alpha
+  provider:
+    name: Red Hat, Inc
+  replaces: dedicated-admin-operator.v0.1.28-2019-03-27-8bbbc8f
+  version: 0.1.31-2019-03-29-3ff1db8
