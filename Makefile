@@ -11,6 +11,7 @@ SHELL := /usr/bin/env bash
 # - VERSION_MAJOR
 # - VERSION_MINOR
 include project.mk
+include checkout-operator.mk
 
 # Validate variables in project.mk exist
 ifndef CATALOG_NAMESPACE
@@ -105,21 +106,9 @@ manifests-operators: operator-source
 .PHONY: manifests
 manifests: manifests-osd-operators manifests-operators
 
-.PHONY: $(SOURCE_DIR)/dedicated-admin-operator
-$(SOURCE_DIR)/dedicated-admin-operator:
-	mkdir -p $(SOURCE_DIR)
-	pushd $(SOURCE_DIR); \
-	if [ ! -e "dedicated-admin-operator" ]; then \
-		git clone -b master https://github.com/openshift/dedicated-admin-operator.git; \
-	else \
-		pushd dedicated-admin-operator; \
-		git pull; \
-		popd; \
-	fi; \
-	popd
-
 .PHONY: operator-source
-operator-source: $(SOURCE_DIR)/dedicated-admin-operator
+operator-source: 
+	$(call checkout_operator,openshift,dedicated-admin-operator)
 
 .PHONY: catalog
 catalog: operator-source
