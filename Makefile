@@ -45,8 +45,6 @@ BUILD_DATE=$(shell date -u +%Y-%m-%d)
 CURRENT_COMMIT=$(shell git rev-parse --short=8 HEAD)
 CATALOG_VERSION?=$(CHANNEL)-$(BUILD_DATE)-$(CURRENT_COMMIT)
 
-SUBSCRIPTIONS=$(shell cat subscriptions.json)
-
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR=operators
 
@@ -82,29 +80,26 @@ SED_CMD=sed -e "s/\#IMAGE_REGISTRY\#/${IMAGE_REGISTRY}/g" \
 			-e "s/\#OPERATOR_NAME\#/$${OPERATOR_NAME}/g" \
 			-e "s/\#OPERATOR_NAMESPACE\#/$${OPERATOR_NAMESPACE}/g"
 
-.PHONY: manifests-osd-operators
-manifests-osd-operators:
+manifests/00-catalog.yaml:
 	mkdir -p manifests/
 	# create CatalogSource yaml
-	TEMPLATE=scripts/templates/template_osd-operators.CatalogSource.yaml; \
-	DEST=manifests/osd-operators.CatalogSource.yaml; \
+	TEMPLATE=scripts/templates/catalog.yaml; \
+	DEST=manifests/00-catalog.yaml; \
 	$(SED_CMD) $$TEMPLATE > $$DEST
 
-.PHONY: manifests-operators
-manifests-operators: operator-source
+.PHONY: manifests/operators
+manifests/operators: operator-source
 	mkdir -p manifests/
 	# create yaml per operator
 	for DIR in $(SOURCE_DIR)/**/; do \
 		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
-		for TYPE in Namespace OperatorGroup Subscription; do \
-			TEMPLATE=scripts/templates/template_operator.$$TYPE.yaml; \
-			DEST=manifests/$${OPERATOR_NAME}.$$TYPE.yaml; \
-			$(SED_CMD) $$TEMPLATE > $$DEST; \
-		done; \
+		TEMPLATE=scripts/templates/operator.yaml; \
+		DEST=manifests/10-$${OPERATOR_NAME}.yaml; \
+		$(SED_CMD) $$TEMPLATE > $$DEST; \
 	done
 
 .PHONY: manifests
-manifests: manifests-osd-operators manifests-operators
+manifests: manifests/00-catalog.yaml manifests/operators
 
 .PHONY: operator-source
 operator-source: 
@@ -114,7 +109,7 @@ operator-source:
 catalog: operator-source
 	for DIR in $(SOURCE_DIR)/**/; do \
 		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
-		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL); \
+		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
 	done
 
 .PHONY: build

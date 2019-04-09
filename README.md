@@ -44,17 +44,9 @@ operator-source:
 
 # Building
 
-NOTE the source for operators is checked out in a temp directory.
-You can run out of disk space if not cleaned up.  Either use the `cleantemp` target or clean manually.
-
-Build and push with cleanup:
+Build and push:
 ```
-make build push cleantemp
-```
-
-Clean manually:
-```
-rm -rf /tmp/**/
+make build push
 ```
 
 Push image and push git changes:
@@ -72,7 +64,6 @@ make clean
 The following are some of the `make` targets are included:
 
 - clean - cleans up any uncommitted `catalog-manifests/` changes and wipes `manifests/`
-- cleantemp - cleans up temp directories created to checkout operator source
 - manifests - generates the `manifests/` scripts
 - catalog - updates the `catalog-manifests/` if there are any updates
 - build - build the container image
