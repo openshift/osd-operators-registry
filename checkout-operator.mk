@@ -3,7 +3,9 @@
 #  2 - github repo name (operator name)
 define checkout_operator
 	mkdir -p $(SOURCE_DIR); \
-	pushd $(SOURCE_DIR); \
-	git clone -b master https://github.com/$(1)/$(2).git || (pushd $(2) && git pull && popd); \
-	popd
+	if [[ ! -d $(SOURCE_DIR)/$(2) ]]; then \
+		git clone -b master https://github.com/$(1)/$(2).git $(SOURCE_DIR)/$(2) ;\
+	else \
+		cd $(SOURCE_DIR)/$(2) git reset --hard && git pull --force && cd ../.. ;\
+	fi
 endef

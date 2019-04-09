@@ -48,11 +48,17 @@ CATALOG_VERSION?=$(CHANNEL)-$(BUILD_DATE)-$(CURRENT_COMMIT)
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR=operators
 
+# List of github.org repositories containing operators
+# This is in the format username/reponame
+OPERATORS := openshift/dedicated-admin-operator
+
 .PHONY: default
 default: build
 
 .PHONY: clean
 clean:
+	ifndef SOURCE_DIR
+	$(error SOURCE_DIR needs to be defined or you delete /)
 	# clean generated osd-operators manifests
 	rm -rf manifests/
 	# clean checked out operator source
@@ -65,7 +71,7 @@ clean:
 .PHONY: isclean
 .SILENT: isclean
 isclean:
-	(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
+	@(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
 
 # One big sed command instead of a function because OPERATOR_X vars 
 # are provided by shell, not make vars, and hard (imposisble?) to
@@ -87,12 +93,12 @@ manifests/00-catalog.yaml:
 	DEST=manifests/00-catalog.yaml; \
 	$(SED_CMD) $$TEMPLATE > $$DEST
 
+# create yaml per operator
 .PHONY: manifests/operators
 manifests/operators: operator-source
-	mkdir -p manifests/
-	# create yaml per operator
-	for DIR in $(SOURCE_DIR)/**/; do \
-		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
+	mkdir -p manifests/ ;\
+	for DIR in $(SOURCE_DIR)/**/ ; do \
+		eval $$($(MAKE) ALLOW_DIRTY_CHECKOUT=$(ALLOW_DIRTY_CHECKOUT) -C $$DIR env --no-print-directory); \
 		TEMPLATE=scripts/templates/operator.yaml; \
 		DEST=manifests/10-$${OPERATOR_NAME}.yaml; \
 		$(SED_CMD) $$TEMPLATE > $$DEST; \
@@ -102,13 +108,19 @@ manifests/operators: operator-source
 manifests: manifests/00-catalog.yaml manifests/operators
 
 .PHONY: operator-source
-operator-source: 
-	$(call checkout_operator,openshift,dedicated-admin-operator)
+operator-source:
+	for operator in $(OPERATORS); do \
+		org="$$(echo $$operator | cut -d / -f 1)" ; \
+		reponame="$$(echo $$operator | cut -d / -f 2-)" ; \
+		echo "org = $$org reponame = $$reponame" ; \
+		$(call checkout_operator,$$org,$$reponame) ;\
+		echo ;\
+	done
 
 .PHONY: catalog
 catalog: operator-source
 	for DIR in $(SOURCE_DIR)/**/; do \
-		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
+		eval $$($(MAKE) ALLOW_DIRTY_CHECKOUT=$(ALLOW_DIRTY_CHECKOUT) -C $$DIR env --no-print-directory); \
 		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
 	done
 
