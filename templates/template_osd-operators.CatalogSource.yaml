@@ -1,0 +1,17 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  generation: 1
+  labels:
+    opsrc-datastore: "true"
+    opsrc-provider: redhat
+  name: osd-operators
+  namespace: openshift-operator-lifecycle-manager
+spec:
+  image: quay.io/openshift-sre/osd-operators:production-#SHA#
+  displayName: OSD Operators
+  icon:
+    base64data: ""
+    mediatype: ""
+  publisher: Red Hat
+  sourceType: grpc
