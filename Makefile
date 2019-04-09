@@ -73,7 +73,7 @@ endif
 .PHONY: isclean
 .SILENT: isclean
 isclean:
-	@(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
+	(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
 
 # One big sed command instead of a function because OPERATOR_X vars 
 # are provided by shell, not make vars, and hard (imposisble?) to
