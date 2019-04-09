@@ -9,7 +9,7 @@ define checkout_operator
 		if [[  -z "$${SKIP_GITREFRESH}" ]]; then \
 			cd $(SOURCE_DIR)/$(2) git reset --hard && git pull --force && cd ../.. ;\
 		else \
-			echo "SKIP_GITREFRESH set, skipping git refresh for $(1)$(2)" ;\
+			echo "SKIP_GITREFRESH set, skipping git refresh for $(1)/$(2)" ;\
 		fi ;\
 	fi
 endef
