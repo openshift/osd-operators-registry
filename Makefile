@@ -57,8 +57,10 @@ default: build
 
 .PHONY: clean
 clean:
-	ifndef SOURCE_DIR
-	$(error SOURCE_DIR needs to be defined or you delete /)
+ifndef SOURCE_DIR
+		$(error SOURCE_DIR needs to be defined or you delete /)
+endif
+
 	# clean generated osd-operators manifests
 	rm -rf manifests/
 	# clean checked out operator source
