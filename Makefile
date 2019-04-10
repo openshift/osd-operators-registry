@@ -121,6 +121,13 @@ catalog: operator-source
 		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
 	done
 
+.PHONY: check-operator-images
+check-operator-images: operator-source
+	for DIR in $(SOURCE_DIR)/**/; do \
+		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
+		docker pull $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION || (echo "Image cannot be pulled: $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION" && exit 1); \
+	done
+
 .PHONY: build
 build: isclean operator-source manifests catalog build-only
 
@@ -129,7 +136,7 @@ build-only:
 	docker build -f ${DOCKERFILE} --tag "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}" .
 
 .PHONY: push
-push:
+push: check-operator-images
 	docker push "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}"
 
 .PHONY: git-commit
