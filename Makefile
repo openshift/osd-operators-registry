@@ -46,7 +46,11 @@ CURRENT_COMMIT=$(shell git rev-parse --short=8 HEAD)
 CATALOG_VERSION?=$(CHANNEL)-$(BUILD_DATE)-$(CURRENT_COMMIT)
 
 ALLOW_DIRTY_CHECKOUT?=false
-SOURCE_DIR=operators
+SOURCE_DIR := operators
+
+# List of github.org repositories containing operators
+# This is in the format username/reponame separated by space:  user1/repo1 user2/repo2 user3/repo3
+OPERATORS := openshift/dedicated-admin-operator
 
 .PHONY: default
 default: build
@@ -87,11 +91,11 @@ manifests/00-catalog.yaml:
 	DEST=manifests/00-catalog.yaml; \
 	$(SED_CMD) $$TEMPLATE > $$DEST
 
+# create yaml per operator
 .PHONY: manifests/operators
 manifests/operators: operator-source
-	mkdir -p manifests/
-	# create yaml per operator
-	for DIR in $(SOURCE_DIR)/**/; do \
+	mkdir -p manifests/ ;\
+	for DIR in $(SOURCE_DIR)/**/ ; do \
 		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
 		TEMPLATE=scripts/templates/operator.yaml; \
 		DEST=manifests/10-$${OPERATOR_NAME}.yaml; \
@@ -102,8 +106,14 @@ manifests/operators: operator-source
 manifests: manifests/00-catalog.yaml manifests/operators
 
 .PHONY: operator-source
-operator-source: 
-	$(call checkout_operator,openshift,dedicated-admin-operator)
+operator-source:
+	for operator in $(OPERATORS); do \
+		org="$$(echo $$operator | cut -d / -f 1)" ; \
+		reponame="$$(echo $$operator | cut -d / -f 2-)" ; \
+		echo "org = $$org reponame = $$reponame" ; \
+		$(call checkout_operator,$$org,$$reponame) ;\
+		echo ;\
+	done
 
 .PHONY: catalog
 catalog: operator-source

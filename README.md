@@ -78,6 +78,7 @@ The following variables (with defaults) are available for overriding by the user
 - IMAGE_REPOSITORY - target container repository ($USER)
 - IMAGE_NAME - target image name ($OPERATOR_NAME)
 - ALLOW_DIRTY_CHECKOUT - if a dirty local checkout is allowed (false)
+- SKIP_GITREFRESH - if set, skip performing `git reset` and `git pull` on all operator source trees (false)
 
 Note that `IMAGE_REPOSITORY` defaults to the current user's name.  The default behavior of `make build` and `make push` will therefore be to create images in the user's namespace.  Automation would override this to push to an organization like this:
 

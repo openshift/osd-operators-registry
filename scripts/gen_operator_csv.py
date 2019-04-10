@@ -64,7 +64,7 @@ if __name__ == '__main__':
     print("Generating CSV for version: %s" % operator_version)
 
     with open('scripts/templates/csv.yaml', 'r') as stream:
-        csv = yaml.load(stream, Loader=yaml.FullLoader)
+        csv = yaml.load(stream)
 
     # set templated values
     csv['metadata']['name'] = operator_name
