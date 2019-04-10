@@ -137,7 +137,7 @@ build-only:
 	docker build -f ${DOCKERFILE} --tag "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}" .
 
 .PHONY: push
-push:
+push: check-operator-images
 	docker push "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}"
 
 .PHONY: git-commit
