@@ -49,7 +49,7 @@ ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR := operators
 
 # List of github.org repositories containing operators
-# This is in the format username/reponame
+# This is in the format username/reponame separated by space:  user1/repo1 user2/repo2 user3/repo3
 OPERATORS := openshift/dedicated-admin-operator
 
 .PHONY: default
