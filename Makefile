@@ -96,7 +96,7 @@ manifests/00-catalog.yaml:
 manifests/operators: operator-source
 	mkdir -p manifests/ ;\
 	for DIR in $(SOURCE_DIR)/**/ ; do \
-		eval $$($(MAKE) ALLOW_DIRTY_CHECKOUT=$(ALLOW_DIRTY_CHECKOUT) -C $$DIR env --no-print-directory); \
+		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
 		TEMPLATE=scripts/templates/operator.yaml; \
 		DEST=manifests/10-$${OPERATOR_NAME}.yaml; \
 		$(SED_CMD) $$TEMPLATE > $$DEST; \
