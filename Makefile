@@ -118,7 +118,7 @@ operator-source:
 .PHONY: catalog
 catalog: operator-source
 	for DIR in $(SOURCE_DIR)/**/; do \
-		eval $$($(MAKE) ALLOW_DIRTY_CHECKOUT=$(ALLOW_DIRTY_CHECKOUT) -C $$DIR env --no-print-directory); \
+		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
 		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
 	done
 
