@@ -37,9 +37,7 @@ env:
 In this repository (aka Registry) you need to simply add a call to `checkout_operator` in the `operator-source` target.  Note not to include spaces between function name and arguments in `call`:
 
 ```
-.PHONY: operator-source
-operator-source: 
-	$(call checkout_operator,dedicated-admin-operator)
+OPERATORS := openshift/dedicated-admin-operator thenamespace/newhotness-operator
 ```
 
 # Building
@@ -90,4 +88,22 @@ For local testing you might want to build with dirty checkouts.  Keep in mind ve
 
 ```
 ALLOW_DIRTY_CHECKOUT=true make build
+```
+
+# Releasing
+
+Any time there's a new version of a bundled operator that needs release we must push an update of the catalog.  A few things to keep in mind when doing this:
+
+- the catalog's channel is based on the local branch name
+- the catalog's version is based on number of commits and git hash
+- the CatalogSource yaml is updated for both of these and must be committed and pushed
+- the catalog-manifests/ is updated and must be committed and pushed
+- no source in the repo needs changed to cut a new release
+- the default IMAGE_REPOSITORY is ${USER} and must be overriden
+- the make target `isclean` will verify no local changes are uncommited
+
+For this reason it is recommend a direct push to the target branch this:
+
+```
+IMAGE_REPOSITORY=openshift-sre make isclean build push git-commit git-push
 ```

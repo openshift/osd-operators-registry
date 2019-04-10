@@ -7,7 +7,7 @@ define checkout_operator
 		git clone -b master https://github.com/$(1)/$(2).git $(SOURCE_DIR)/$(2) ;\
 	else \
 		if [[  -z "$${SKIP_GITREFRESH}" ]]; then \
-			cd $(SOURCE_DIR)/$(2) git reset --hard && git pull --force && cd ../.. ;\
+			pushd -n $(SOURCE_DIR)/$(2) && git reset --hard && git pull --force && popd -n ;\
 		else \
 			echo "SKIP_GITREFRESH set, skipping git refresh for $(1)/$(2)" ;\
 		fi ;\
