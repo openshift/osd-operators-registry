@@ -70,6 +70,7 @@ The following are some of the `make` targets are included:
 - push - pushes the container image
 - git-commit - commits `catalog-manifests/`
 - git-push - pushes current branch
+- check-operator-images - verifies dependent operator images can be pulled
 
 The following variables (with defaults) are available for overriding by the user of `make`:
 
