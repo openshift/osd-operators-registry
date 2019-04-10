@@ -141,7 +141,7 @@ push: check-operator-images
 
 .PHONY: git-commit
 git-commit:
-	git add catalog-manifests/
+	git add catalog-manifests/ manifests/
 	git commit -m "New catalog: $(CATALOG_VERSION)" --author="OpenShift SRE <aos-sre@redhat.com>"
 
 .PHONY: git-push
