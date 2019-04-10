@@ -46,7 +46,7 @@ CURRENT_COMMIT=$(shell git rev-parse --short=8 HEAD)
 CATALOG_VERSION?=$(CHANNEL)-$(BUILD_DATE)-$(CURRENT_COMMIT)
 
 ALLOW_DIRTY_CHECKOUT?=false
-SOURCE_DIR=operators
+SOURCE_DIR := operators
 
 # List of github.org repositories containing operators
 # This is in the format username/reponame
@@ -57,10 +57,6 @@ default: build
 
 .PHONY: clean
 clean:
-ifndef SOURCE_DIR
-	$(error SOURCE_DIR needs to be defined or you delete /)
-endif
-
 	# clean generated osd-operators manifests
 	rm -rf manifests/
 	# clean checked out operator source
