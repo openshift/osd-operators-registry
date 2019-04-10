@@ -6,3 +6,23 @@ metadata:
     openshift.io/node-selector: ""
   labels:
     openshift.io/cluster-monitoring: "true"
+---
+apiVersion: operators.coreos.com/v1alpha2
+kind: OperatorGroup
+metadata:
+  name: #OPERATOR_NAME#
+  namespace: #OPERATOR_NAMESPACE#
+spec:
+  targetNamespaces:
+  - #OPERATOR_NAMESPACE#
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: #OPERATOR_NAME#
+  namespace: #OPERATOR_NAMESPACE#
+spec:
+  channel: #CHANNEL#
+  name: #OPERATOR_NAME#
+  source: #IMAGE_NAME#
+  sourceNamespace: #CATALOG_NAMESPACE#

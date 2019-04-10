@@ -57,14 +57,12 @@ default: build
 
 .PHONY: clean
 clean:
-	# clean generated osd-operators manifests
-	rm -rf manifests/
 	# clean checked out operator source
 	rm -rf $(SOURCE_DIR)/
 	# clean generated catalog
 	git clean -df catalog-manifests/
-	# revert packages
-	git checkout catalog-manifests/**/*.package.yaml
+	# revert packages and manifests/
+	git checkout catalog-manifests/**/*.package.yaml manifests/
 
 .PHONY: isclean
 .SILENT: isclean
@@ -84,7 +82,8 @@ SED_CMD=sed -e "s/\#IMAGE_REGISTRY\#/${IMAGE_REGISTRY}/g" \
 			-e "s/\#OPERATOR_NAME\#/$${OPERATOR_NAME}/g" \
 			-e "s/\#OPERATOR_NAMESPACE\#/$${OPERATOR_NAMESPACE}/g"
 
-manifests/00-catalog.yaml:
+.PHONY: manifests/catalog
+manifests/catalog:
 	mkdir -p manifests/
 	# create CatalogSource yaml
 	TEMPLATE=scripts/templates/catalog.yaml; \
@@ -103,7 +102,7 @@ manifests/operators: operator-source
 	done
 
 .PHONY: manifests
-manifests: manifests/00-catalog.yaml manifests/operators
+manifests: manifests/catalog manifests/operators
 
 .PHONY: operator-source
 operator-source:
