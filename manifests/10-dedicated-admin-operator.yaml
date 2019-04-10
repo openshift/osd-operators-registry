@@ -22,7 +22,7 @@ metadata:
   name: dedicated-admin-operator
   namespace: openshift-dedicated-admin
 spec:
-  channel: TBD
+  channel: master
   name: dedicated-admin-operator
   source: osd-operators-registry
   sourceNamespace: openshift-operator-lifecycle-manager

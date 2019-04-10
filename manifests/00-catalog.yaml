@@ -7,7 +7,7 @@ metadata:
   name: osd-operators-registry
   namespace: openshift-operator-lifecycle-manager
 spec:
-  image: quay.io/nmalik/osd-operators-registry:TBD
+  image: quay.io/openshift-sre/osd-operators-registry:master-2019-04-10-775905a2
   displayName: OSD Operators
   icon:
     base64data: ""
