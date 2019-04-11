@@ -130,7 +130,8 @@ git-tag:
 
 .PHONY: git-push
 git-push: git-tag
-	git push && git push --tags
+	REMOTE=$(shell git status -sb | grep ^# | sed 's#.*[.]\([^./]*\)/[^./]*$$#\1#g'); \
+	git push && git push $$REMOTE $(GIT_TAG)
 
 .PHONY: version
 version:
