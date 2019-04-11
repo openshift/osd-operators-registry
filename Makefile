@@ -8,8 +8,6 @@ SHELL := /usr/bin/env bash
 # - IMAGE_REGISTRY
 # - IMAGE_REPOSITORY
 # - IMAGE_NAME
-# - VERSION_MAJOR
-# - VERSION_MINOR
 include project.mk
 include checkout-operator.mk
 
@@ -32,18 +30,10 @@ endif
 ifndef IMAGE_NAME
 $(error IMAGE_NAME is not set; check project.mk file)
 endif
-ifndef VERSION_MAJOR
-$(error VERSION_MAJOR is not set; check project.mk file)
-endif
-ifndef VERSION_MINOR
-$(error VERSION_MINOR is not set; check project.mk file)
-endif
 
-# Generate version and tag information from inputs
-COMMIT_NUMBER=$(shell git rev-list `git rev-list --parents HEAD | egrep "^[a-f0-9]{40}$$"`..HEAD --count)
-BUILD_DATE=$(shell date -u +%Y-%m-%d)
-CURRENT_COMMIT=$(shell git rev-parse --short=8 HEAD)
-CATALOG_VERSION?=$(CHANNEL)-$(BUILD_DATE)-$(CURRENT_COMMIT)
+# Generate version and tag information
+CATALOG_HASH=$(shell find catalog-manifests/ -type f -exec md5sum {} \; | sort | md5sum | cut -d ' ' -f 1)
+CATALOG_VERSION=$(CHANNEL)-$(CATALOG_HASH)
 
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR := operators
