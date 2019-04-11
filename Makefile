@@ -8,10 +8,8 @@ SHELL := /usr/bin/env bash
 # - IMAGE_REGISTRY
 # - IMAGE_REPOSITORY
 # - IMAGE_NAME
-# - VERSION_MAJOR
-# - VERSION_MINOR
 include project.mk
-include checkout-operator.mk
+include functions.mk
 
 # Validate variables in project.mk exist
 ifndef CATALOG_NAMESPACE
@@ -32,18 +30,10 @@ endif
 ifndef IMAGE_NAME
 $(error IMAGE_NAME is not set; check project.mk file)
 endif
-ifndef VERSION_MAJOR
-$(error VERSION_MAJOR is not set; check project.mk file)
-endif
-ifndef VERSION_MINOR
-$(error VERSION_MINOR is not set; check project.mk file)
-endif
 
-# Generate version and tag information from inputs
-COMMIT_NUMBER=$(shell git rev-list `git rev-list --parents HEAD | egrep "^[a-f0-9]{40}$$"`..HEAD --count)
-BUILD_DATE=$(shell date -u +%Y-%m-%d)
-CURRENT_COMMIT=$(shell git rev-parse --short=8 HEAD)
-CATALOG_VERSION?=$(CHANNEL)-$(BUILD_DATE)-$(CURRENT_COMMIT)
+# Generate version and tag information
+CATALOG_HASH=$(shell find catalog-manifests/ -type f -exec openssl md5 {} \; | sort | openssl md5 | cut -d ' ' -f2)
+CATALOG_VERSION=$(CHANNEL)-$(CATALOG_HASH)
 
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR := operators
@@ -69,36 +59,23 @@ clean:
 isclean:
 	(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
 
-# One big sed command instead of a function because OPERATOR_X vars 
-# are provided by shell, not make vars, and hard (imposisble?) to
-# pass as args to a function.  
-SED_CMD=sed -e "s/\#IMAGE_REGISTRY\#/${IMAGE_REGISTRY}/g" \
-			-e "s/\#IMAGE_REPOSITORY\#/${IMAGE_REPOSITORY}/g" \
-			-e "s/\#IMAGE_NAME\#/${IMAGE_NAME}/g" \
-			-e "s/\#CATALOG_NAMESPACE\#/${CATALOG_NAMESPACE}/g" \
-			-e "s/\#CHANNEL\#/${CHANNEL}/g" \
-			-e "s/\#CATALOG_VERSION\#/${CATALOG_VERSION}/g" \
-			-e "s/\#CURRENT_COMMIT\#/${CURRENT_COMMIT}/g" \
-			-e "s/\#OPERATOR_NAME\#/$${OPERATOR_NAME}/g" \
-			-e "s/\#OPERATOR_NAMESPACE\#/$${OPERATOR_NAMESPACE}/g"
-
 .PHONY: manifests/catalog
-manifests/catalog:
+manifests/catalog: catalog
 	mkdir -p manifests/
 	# create CatalogSource yaml
 	TEMPLATE=scripts/templates/catalog.yaml; \
 	DEST=manifests/00-catalog.yaml; \
-	$(SED_CMD) $$TEMPLATE > $$DEST
+	$(call process_template,.,$$TEMPLATE,$$DEST)
 
 # create yaml per operator
 .PHONY: manifests/operators
-manifests/operators: operator-source
+manifests/operators: catalog
 	mkdir -p manifests/ ;\
 	for DIR in $(SOURCE_DIR)/**/ ; do \
-		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
+		SOURCE_NAME=$$(echo $$DIR | cut -d/ -f2); \
 		TEMPLATE=scripts/templates/operator.yaml; \
-		DEST=manifests/10-$${OPERATOR_NAME}.yaml; \
-		$(SED_CMD) $$TEMPLATE > $$DEST; \
+		DEST=manifests/10-$${SOURCE_NAME}.yaml; \
+		$(call process_template,$$DIR,$$TEMPLATE,$$DEST); \
 	done
 
 .PHONY: manifests
