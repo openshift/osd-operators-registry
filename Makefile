@@ -9,7 +9,7 @@ SHELL := /usr/bin/env bash
 # - IMAGE_REPOSITORY
 # - IMAGE_NAME
 include project.mk
-include checkout-operator.mk
+include functions.mk
 
 # Validate variables in project.mk exist
 ifndef CATALOG_NAMESPACE
