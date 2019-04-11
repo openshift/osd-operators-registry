@@ -34,6 +34,7 @@ endif
 # Generate version and tag information
 CATALOG_HASH=$(shell find catalog-manifests/ -type f -exec openssl md5 {} \; | sort | openssl md5 | cut -d ' ' -f2)
 CATALOG_VERSION=$(CHANNEL)-$(CATALOG_HASH)
+GIT_TAG=release-$(CATALOG_VERSION)
 
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR := operators
@@ -121,9 +122,15 @@ git-commit:
 	git add catalog-manifests/ manifests/
 	git commit -m "New catalog: $(CATALOG_VERSION)" --author="OpenShift SRE <aos-sre@redhat.com>"
 
+.PHONY: git-tag
+.SILENT: git-tag
+git-tag:
+	# attempt to tag, do not recreate a tag (only happens if changes happen outside of catalog-manifests/)
+	git tag $(GIT_TAG) 2> /dev/null && echo "INFO: created tag: $(GIT_TAG)" || echo "INFO: git tag already exists, skipping tag creation: $(GIT_TAG)"
+
 .PHONY: git-push
-git-push:
-	git push
+git-push: git-tag
+	git push && git push --tags
 
 .PHONY: version
 version:
