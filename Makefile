@@ -32,7 +32,7 @@ $(error IMAGE_NAME is not set; check project.mk file)
 endif
 
 # Generate version and tag information
-CATALOG_HASH=$(shell find catalog-manifests/ -type f -exec md5sum {} \; | sort | md5sum | cut -d ' ' -f 1)
+CATALOG_HASH=$(shell find catalog-manifests/ -type f -exec openssl md5 {} \; | sort | openssl md5 | cut -d ' ' -f2)
 CATALOG_VERSION=$(CHANNEL)-$(CATALOG_HASH)
 
 ALLOW_DIRTY_CHECKOUT?=false
