@@ -59,36 +59,23 @@ clean:
 isclean:
 	(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
 
-# One big sed command instead of a function because OPERATOR_X vars 
-# are provided by shell, not make vars, and hard (imposisble?) to
-# pass as args to a function.  
-SED_CMD=sed -e "s/\#IMAGE_REGISTRY\#/${IMAGE_REGISTRY}/g" \
-			-e "s/\#IMAGE_REPOSITORY\#/${IMAGE_REPOSITORY}/g" \
-			-e "s/\#IMAGE_NAME\#/${IMAGE_NAME}/g" \
-			-e "s/\#CATALOG_NAMESPACE\#/${CATALOG_NAMESPACE}/g" \
-			-e "s/\#CHANNEL\#/${CHANNEL}/g" \
-			-e "s/\#CATALOG_VERSION\#/${CATALOG_VERSION}/g" \
-			-e "s/\#CURRENT_COMMIT\#/${CURRENT_COMMIT}/g" \
-			-e "s/\#OPERATOR_NAME\#/$${OPERATOR_NAME}/g" \
-			-e "s/\#OPERATOR_NAMESPACE\#/$${OPERATOR_NAMESPACE}/g"
-
 .PHONY: manifests/catalog
-manifests/catalog:
+manifests/catalog: catalog
 	mkdir -p manifests/
 	# create CatalogSource yaml
 	TEMPLATE=scripts/templates/catalog.yaml; \
 	DEST=manifests/00-catalog.yaml; \
-	$(SED_CMD) $$TEMPLATE > $$DEST
+	$(call process_template,.,$$TEMPLATE,$$DEST)
 
 # create yaml per operator
 .PHONY: manifests/operators
-manifests/operators: operator-source
+manifests/operators: catalog
 	mkdir -p manifests/ ;\
 	for DIR in $(SOURCE_DIR)/**/ ; do \
-		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
+		SOURCE_NAME=$$(echo $$DIR | cut -d/ -f2); \
 		TEMPLATE=scripts/templates/operator.yaml; \
-		DEST=manifests/10-$${OPERATOR_NAME}.yaml; \
-		$(SED_CMD) $$TEMPLATE > $$DEST; \
+		DEST=manifests/10-$${SOURCE_NAME}.yaml; \
+		$(call process_template,$$DIR,$$TEMPLATE,$$DEST); \
 	done
 
 .PHONY: manifests
