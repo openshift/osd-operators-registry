@@ -123,7 +123,11 @@ if __name__ == '__main__':
                                 sys.exit(1)
 
                         print('Adding {} to Catalog: {}'.format(obj['kind'], file_path))
-                        shutil.copyfile(file_path, os.path.join(version_dir, file.lower()))
+                        if 'namespace' in obj['metadata']:
+                            bundle_filename="10-{}.{}.{}.yaml".format(obj['metadata']['namespace'], obj['metadata']['name'], obj['kind']).lower()
+                        else:
+                            bundle_filename="00-{}.{}.yaml".format(obj['metadata']['name'], obj['kind']).lower()
+                        shutil.copyfile(file_path, os.path.join(version_dir, bundle_filename))
 
     # Update the deployment to use the defined image:
     csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
@@ -139,7 +143,7 @@ if __name__ == '__main__':
     csv['metadata']['annotations']['createdAt'] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Write the CSV to disk:
-    csv_filename = "%s.v%s.clusterserviceversion.yaml" % (operator_name, operator_version)
+    csv_filename = "20-%s.v%s.clusterserviceversion.yaml" % (operator_name, operator_version)
     csv_file = os.path.join(version_dir, csv_filename)
     with open(csv_file, 'w') as outfile:
         yaml.dump(csv, outfile, default_flow_style=False)
