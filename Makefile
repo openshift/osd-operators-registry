@@ -125,7 +125,7 @@ check-operator-images: operator-source
 			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
 			exit 3 ;\
 		else \
-			docker pull $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION ;\
+			docker pull $$OPERATOR_IMAGE_URI ;\
 			if [[ $$? -ne 0 ]]; then \
 				echo "Image cannot be pulled: $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION" ;\
 				exit 1 ; \
