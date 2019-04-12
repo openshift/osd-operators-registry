@@ -99,13 +99,13 @@ catalog: manifestdir operator-source
 		operator="$$(echo $$operatorrepo | cut -d / -f2)" ;\
 		echo "Building catalog for $$operator in $(SOURCE_DIR)/$$operator" ;\
 		eval $$($(MAKE) -C $(SOURCE_DIR)/$$operator env --no-print-directory); \
-		if [[ -z "$${OPERATOR_NAME}" || -z "$${OPERATOR_NAMESPACE}" || -z "$${OPERATOR_VERSION}" ]]; then \
-			echo "Couldn't determine OPERATOR_NAME, OPERATOR_NAMESPACE or OPERATOR_VERSION from $(SOURCE_DIR)/$$operator. make env output follows" ; \
+		if [[ -z "$${OPERATOR_NAME}" || -z "$${OPERATOR_NAMESPACE}" || -z "$${OPERATOR_VERSION}" || -z "$${OPERATOR_IMAGE_URI}" ]]; then \
+			echo "Couldn't determine OPERATOR_NAME, OPERATOR_NAMESPACE, OPERATOR_VERSION or OPERATOR_IMAGE_URI from $(SOURCE_DIR)/$$operator. make env output follows" ; \
 			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
 			unset OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI ;\
 			exit 3 ;\
 		else \
-			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) 1>/dev/null ;\
+			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) 1>/dev/null ;\
 			if [[ $$? -ne 0 ]]; then \
 				echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" ;\
 				rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION ;\
