@@ -26,10 +26,12 @@ To make this easy, you can add something like the following to your `Makefile` i
 
 ```
 .PHONY: env
+.SILENT: env
 env:
-    @echo OPERATOR_NAME=$(OPERATOR_NAME)
-    @echo OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)
-    @echo OPERATOR_VERSION=$(OPERATOR_VERSION)
+    echo OPERATOR_NAME=$(OPERATOR_NAME)
+    echo OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)
+    echo OPERATOR_VERSION=$(OPERATOR_VERSION)
+    echo OPERATOR_IMAGE_URI=$(OPERATOR_IMAGE_URI)
 ```
 
 ## Registry
