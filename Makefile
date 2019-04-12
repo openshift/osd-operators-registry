@@ -121,7 +121,7 @@ check-operator-images: operator-source
 		reponame="$$(echo $$operator | cut -d / -f 2-)" ; \
 		eval $$($(MAKE) -C $(SOURCE_DIR)/$$reponame env --no-print-directory); \
 		if [[ -z "$${OPERATOR_NAME}" || -z "$${OPERATOR_NAMESPACE}" || -z "$${OPERATOR_VERSION}" || -z "$${OPERATOR_IMAGE_URI}" ]]; then \
-			echo "Couldn't determine OPERATOR_NAME, OPERATOR_NAMESPACE or OPERATOR_VERSION from $(SOURCE_DIR)/$$operator. make env output follows" ; \
+			echo "Couldn't determine OPERATOR_NAME, OPERATOR_NAMESPACE, OPERATOR_VERSION or OPERATOR_IMAGE_URI from $(SOURCE_DIR)/$$operator. make env output follows" ; \
 			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
 			exit 3 ;\
 		else \
