@@ -35,6 +35,7 @@ endif
 CATALOG_HASH=$(shell find catalog-manifests/ -type f -exec openssl md5 {} \; | sort | openssl md5 | cut -d ' ' -f2)
 CATALOG_VERSION=$(CHANNEL)-$(CATALOG_HASH)
 GIT_TAG=release-$(CATALOG_VERSION)
+CATALOG_IMAGE_URI=${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}
 
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR := operators
@@ -96,14 +97,14 @@ operator-source:
 catalog: operator-source
 	for DIR in $(SOURCE_DIR)/**/; do \
 		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
-		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
+		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
 	done
 
 .PHONY: check-operator-images
 check-operator-images: operator-source
 	for DIR in $(SOURCE_DIR)/**/; do \
 		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
-		docker pull $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION || (echo "Image cannot be pulled: $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION" && exit 1); \
+		docker pull $$OPERATOR_IMAGE_URI || (echo "Image cannot be pulled: $$OPERATOR_IMAGE_URI" && exit 1); \
 	done
 
 .PHONY: build
@@ -111,11 +112,11 @@ build: isclean operator-source manifests catalog build-only
 
 .PHONY: build-only
 build-only:
-	docker build -f ${DOCKERFILE} --tag "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}" .
+	docker build -f ${DOCKERFILE} --tag $(CATALOG_IMAGE_URI) .
 
 .PHONY: push
 push: check-operator-images
-	docker push "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/${IMAGE_NAME}:${CATALOG_VERSION}"
+	docker push $(CATALOG_IMAGE_URI)
 
 .PHONY: git-commit
 git-commit:
