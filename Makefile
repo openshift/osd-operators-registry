@@ -80,7 +80,7 @@ manifests/operators: manifestdir catalog
 	done
 
 .PHONY: manifests
-manifests: manifestdir manifests/catalog manifests/operators 
+manifests: manifestdir manifests/catalog manifests/operators
 
 .PHONY: operator-source
 operator-source:
