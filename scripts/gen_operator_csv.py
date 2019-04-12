@@ -26,7 +26,12 @@ if __name__ == '__main__':
     channel_name = sys.argv[6]
 
     catalog_dir = os.path.join("catalog-manifests", operator_name)
-    opeartor_assets_dir = os.path.join(operator_dir, "manifests")
+
+    operator_assets_dir = os.path.join(operator_dir, "manifests")
+    # Check to see if the manifests directory exists before going on.
+    if not os.path.exists(operator_assets_dir):
+        print >> sys.stderr, "ERROR Operator asset directory {} does not exist. Giving up.".format(operator_assets_dir)
+        sys.exit(1)
 
     if not os.path.exists(catalog_dir):
         os.mkdir(catalog_dir)
@@ -79,7 +84,7 @@ if __name__ == '__main__':
     SA_NAME = operator_name
     clusterrole_names_csv = []
 
-    for subdir, dirs, files in os.walk(opeartor_assets_dir):
+    for subdir, dirs, files in os.walk(operator_assets_dir):
         for file in files:
             file_path = subdir + os.sep + file
 
@@ -95,7 +100,7 @@ if __name__ == '__main__':
     csv['spec']['install']['spec']['deployments'] = []
     csv['spec']['install']['spec']['deployments'].append({'spec':{}})
 
-    for subdir, dirs, files in os.walk(opeartor_assets_dir):
+    for subdir, dirs, files in os.walk(operator_assets_dir):
         for file in files:
             file_path = subdir + os.sep + file
             # Parse files to manage clusterPermissions and deployments in csv
@@ -124,6 +129,11 @@ if __name__ == '__main__':
 
                         print('Adding {} to Catalog: {}'.format(obj['kind'], file_path))
                         shutil.copyfile(file_path, os.path.join(version_dir, file.lower()))
+
+    if len(csv['spec']['install']['spec']['deployments']) == 0:
+        print >> sys.stderr, "ERROR Did not find any Deployments in {}. There is nothing to deploy, so giving up.".format(operator_assets_dir)
+        sys.exit(1)
+
 
     # Update the deployment to use the defined image:
     csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
