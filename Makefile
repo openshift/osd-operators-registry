@@ -62,21 +62,27 @@ isclean:
 
 .PHONY: manifests/catalog
 manifests/catalog: catalog
-	mkdir -p manifests/
+	mkdir -p manifests/hive
 	# create CatalogSource yaml
 	TEMPLATE=scripts/templates/catalog.yaml; \
 	DEST=manifests/00-catalog.yaml; \
 	$(call process_template,.,$$TEMPLATE,$$DEST)
+	SSTEMPLATE=scripts/templates/catalog.selectorsyncset.yaml; \
+	SSDEST=manifests/hive/01-catalog.selectorsyncset.yaml; \
+	$(call process_template,.,$$SSTEMPLATE,$$SSDEST)
 
 # create yaml per operator
 .PHONY: manifests/operators
 manifests/operators: catalog
-	mkdir -p manifests/ ;\
+	mkdir -p manifests/hive ;\
 	for DIR in $(SOURCE_DIR)/**/ ; do \
 		SOURCE_NAME=$$(echo $$DIR | cut -d/ -f2); \
 		TEMPLATE=scripts/templates/operator.yaml; \
 		DEST=manifests/10-$${SOURCE_NAME}.yaml; \
 		$(call process_template,$$DIR,$$TEMPLATE,$$DEST); \
+		SSTEMPLATE=scripts/templates/operator.selectorsyncset.yaml; \
+		SSDEST=manifests/hive/20-$${SOURCE_NAME}.selectorsyncset.yaml; \
+		$(call process_template,$$DIR,$$SSTEMPLATE,$$SSDEST); \
 	done
 
 .PHONY: manifests
