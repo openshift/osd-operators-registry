@@ -39,6 +39,7 @@ GIT_TAG=release-$(CATALOG_VERSION)
 ALLOW_DIRTY_CHECKOUT?=false
 SOURCE_DIR := operators
 
+MANIFESTDIR := ./manifests
 # List of github.org repositories containing operators
 # This is in the format username/reponame separated by space:  user1/repo1 user2/repo2 user3/repo3
 OPERATORS := openshift/dedicated-admin-operator
@@ -60,37 +61,32 @@ clean:
 isclean:
 	(test "$(ALLOW_DIRTY_CHECKOUT)" != "false" || test 0 -eq $$(git status --porcelain | wc -l)) || (echo "Local git checkout is not clean, commit changes and try again." && exit 1)
 
+.PHONY: manifestdir
+.SILENT: manifestdir
+manifestdir:
+	mkdir -p $(MANIFESTDIR)
+
+# create CatalogSource yaml
 .PHONY: manifests/catalog
-manifests/catalog: catalog
-	mkdir -p manifests/hive
-	# create CatalogSource yaml
-	TEMPLATE=scripts/templates/catalog.yaml; \
-	DEST=manifests/00-catalog.yaml; \
-	$(call process_template,.,$$TEMPLATE,$$DEST)
-	SSTEMPLATE=scripts/templates/catalog.selectorsyncset.yaml; \
-	SSDEST=manifests/hive/01-catalog.selectorsyncset.yaml; \
-	$(call process_template,.,$$SSTEMPLATE,$$SSDEST)
+manifests/catalog: manifestdir catalog
+	@$(call process_template,.,scripts/templates/catalog.yaml,manifests/00-catalog.yaml)
+	@$(call process_template,.,scripts/templates/catalog.selectorsyncset.yaml,manifests/hive/01-catalog.selectorsyncset.yaml)
 
 # create yaml per operator
 .PHONY: manifests/operators
-manifests/operators: catalog
-	mkdir -p manifests/hive ;\
-	for DIR in $(SOURCE_DIR)/**/ ; do \
-		SOURCE_NAME=$$(echo $$DIR | cut -d/ -f2); \
-		TEMPLATE=scripts/templates/operator.yaml; \
-		DEST=manifests/10-$${SOURCE_NAME}.yaml; \
-		$(call process_template,$$DIR,$$TEMPLATE,$$DEST); \
-		SSTEMPLATE=scripts/templates/operator.selectorsyncset.yaml; \
-		SSDEST=manifests/hive/20-$${SOURCE_NAME}.selectorsyncset.yaml; \
-		$(call process_template,$$DIR,$$SSTEMPLATE,$$SSDEST); \
+manifests/operators: manifestdir catalog
+	@for operatorrepo in $(OPERATORS) ; do \
+		reponame="$$(echo $$operatorrepo | cut -d / -f 2-)" ; \
+		$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operator.yaml,manifests/10-$${reponame}.yaml); \
+		$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operator.selectorsyncset.yaml,manifests/hive/20-$${reponame}.selectorsyncset.yaml); \
 	done
 
 .PHONY: manifests
-manifests: manifests/catalog manifests/operators
+manifests: manifestdir manifests/catalog manifests/operators
 
 .PHONY: operator-source
 operator-source:
-	for operator in $(OPERATORS); do \
+	@for operator in $(OPERATORS); do \
 		org="$$(echo $$operator | cut -d / -f 1)" ; \
 		reponame="$$(echo $$operator | cut -d / -f 2-)" ; \
 		echo "org = $$org reponame = $$reponame" ; \
@@ -99,17 +95,44 @@ operator-source:
 	done
 
 .PHONY: catalog
-catalog: operator-source
-	for DIR in $(SOURCE_DIR)/**/; do \
-		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
-		./scripts/gen_operator_csv.py $$DIR $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION $(CHANNEL) || (echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" && rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION && exit 3); \
+catalog: manifestdir operator-source
+	@for operatorrepo in $(OPERATORS); do \
+		unset OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI ;\
+		operator="$$(echo $$operatorrepo | cut -d / -f2)" ;\
+		echo "Building catalog for $$operator in $(SOURCE_DIR)/$$operator" ;\
+		eval $$($(MAKE) -C $(SOURCE_DIR)/$$operator env --no-print-directory); \
+		if [[ -z "$${OPERATOR_NAME}" || -z "$${OPERATOR_NAMESPACE}" || -z "$${OPERATOR_VERSION}" || -z "$${OPERATOR_IMAGE_URI}" ]]; then \
+			echo "Couldn't determine OPERATOR_NAME, OPERATOR_NAMESPACE, OPERATOR_VERSION or OPERATOR_IMAGE_URI from $(SOURCE_DIR)/$$operator. make env output follows" ; \
+			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
+			exit 3 ;\
+		else \
+			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) 1>/dev/null ;\
+			if [[ $$? -ne 0 ]]; then \
+				echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" ;\
+				rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION ;\
+				exit 3; \
+			fi ;\
+		fi ; \
 	done
 
 .PHONY: check-operator-images
 check-operator-images: operator-source
-	for DIR in $(SOURCE_DIR)/**/; do \
-		eval $$($(MAKE) -C $$DIR env --no-print-directory); \
-		docker pull $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION || (echo "Image cannot be pulled: $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$$OPERATOR_NAME:v$$OPERATOR_VERSION" && exit 1); \
+	@for operator in $(OPERATORS); do \
+		unset OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI ;\
+		org="$$(echo $$operator | cut -d / -f 1)" ; \
+		reponame="$$(echo $$operator | cut -d / -f 2-)" ; \
+		eval $$($(MAKE) -C $(SOURCE_DIR)/$$reponame env --no-print-directory); \
+		if [[ -z "$${OPERATOR_NAME}" || -z "$${OPERATOR_NAMESPACE}" || -z "$${OPERATOR_VERSION}" || -z "$${OPERATOR_IMAGE_URI}" ]]; then \
+			echo "Couldn't determine OPERATOR_NAME, OPERATOR_NAMESPACE, OPERATOR_VERSION or OPERATOR_IMAGE_URI from $(SOURCE_DIR)/$$operator. make env output follows" ; \
+			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
+			exit 3 ;\
+		else \
+			docker pull $$OPERATOR_IMAGE_URI ;\
+			if [[ $$? -ne 0 ]]; then \
+				echo "Image cannot be pulled: $$OPERATOR_IMAGE_URI ;\
+				exit 1 ; \
+			fi ;\
+		fi ;\
 	done
 
 .PHONY: build
@@ -142,3 +165,8 @@ git-push: git-tag
 .PHONY: version
 version:
 	@echo $(CATALOG_VERSION)
+
+.PHONY: env
+.SILENT: env
+env:
+	echo
