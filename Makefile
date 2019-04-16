@@ -129,7 +129,7 @@ check-operator-images: operator-source
 		else \
 			docker pull $$OPERATOR_IMAGE_URI ;\
 			if [[ $$? -ne 0 ]]; then \
-				echo "Image cannot be pulled: $$OPERATOR_IMAGE_URI ;\
+				echo "Image cannot be pulled: $$OPERATOR_IMAGE_URI" ;\
 				exit 1 ; \
 			fi ;\
 		fi ;\
