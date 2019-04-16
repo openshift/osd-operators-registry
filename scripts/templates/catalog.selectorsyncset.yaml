@@ -1,0 +1,27 @@
+apiVersion: hive.openshift.io/v1alpha1
+kind: SelectorSyncSet
+metadata:
+  generation: 1
+  name: osd-operators-registry-catalogsource
+spec:
+  clusterDeploymentSelector:
+    matchLabels:
+      api.openshift.com/managed: "true"
+  resourceApplyMode: sync
+  resources:
+  - apiVersion: operators.coreos.com/v1alpha1
+    kind: CatalogSource
+    metadata:
+      labels:
+        opsrc-datastore: "true"
+        opsrc-provider: redhat
+      name: #IMAGE_NAME#
+      namespace: #CATALOG_NAMESPACE#
+    spec:
+      image: #IMAGE_REGISTRY#/#IMAGE_REPOSITORY#/#IMAGE_NAME#:#CATALOG_VERSION#
+      displayName: OSD Operators
+      icon:
+        base64data: ""
+        mediatype: ""
+      publisher: Red Hat
+      sourceType: grpc

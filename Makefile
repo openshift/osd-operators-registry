@@ -64,12 +64,13 @@ isclean:
 .PHONY: manifestdir
 .SILENT: manifestdir
 manifestdir:
-	mkdir -p $(MANIFESTDIR)
+	mkdir -p $(MANIFESTDIR)/hive
 
 # create CatalogSource yaml
 .PHONY: manifests/catalog
 manifests/catalog: manifestdir catalog
 	@$(call process_template,.,scripts/templates/catalog.yaml,manifests/00-catalog.yaml)
+	@$(call process_template,.,scripts/templates/catalog.selectorsyncset.yaml,manifests/hive/01-catalog.selectorsyncset.yaml)
 
 # create yaml per operator
 .PHONY: manifests/operators
@@ -77,6 +78,7 @@ manifests/operators: manifestdir catalog
 	@for operatorrepo in $(OPERATORS) ; do \
 		reponame="$$(echo $$operatorrepo | cut -d / -f 2-)" ; \
 		$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operator.yaml,manifests/10-$${reponame}.yaml); \
+		$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operator.selectorsyncset.yaml,manifests/hive/20-$${reponame}.selectorsyncset.yaml); \
 	done
 
 .PHONY: manifests
