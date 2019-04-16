@@ -64,7 +64,7 @@ isclean:
 .PHONY: manifestdir
 .SILENT: manifestdir
 manifestdir:
-	mkdir -p $(MANIFESTDIR)
+	mkdir -p $(MANIFESTDIR)/hive
 
 # create CatalogSource yaml
 .PHONY: manifests/catalog
