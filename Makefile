@@ -52,7 +52,7 @@ clean:
 	# clean checked out operator source
 	rm -rf $(SOURCE_DIR)/
 	# clean generated catalog
-	git clean -df catalog-manifests/
+	git clean -df catalog-manifests/ manifests/
 	# revert packages and manifests/
 	git checkout catalog-manifests/**/*.package.yaml manifests/
 
