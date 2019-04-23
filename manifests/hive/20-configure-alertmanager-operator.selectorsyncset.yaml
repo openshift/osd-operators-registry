@@ -12,7 +12,7 @@ spec:
   - apiVersion: v1
     kind: Namespace
     metadata:
-      name: configure-alertmanager-operator
+      name: openshift-monitoring
     annotations:
       openshift.io/node-selector: ""
     labels:
@@ -21,15 +21,15 @@ spec:
     kind: OperatorGroup
     metadata:
       name: configure-alertmanager-operator
-      namespace: configure-alertmanager-operator
+      namespace: openshift-monitoring
     spec:
       targetNamespaces:
-      - configure-alertmanager-operator
+      - openshift-monitoring
   - apiVersion: operators.coreos.com/v1alpha1
     kind: Subscription
     metadata:
       name: configure-alertmanager-operator
-      namespace: configure-alertmanager-operator
+      namespace: openshift-monitoring
     spec:
       channel: master
       name: configure-alertmanager-operator
