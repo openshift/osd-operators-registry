@@ -44,6 +44,11 @@ MANIFESTDIR := ./manifests
 # This is in the format username/reponame separated by space:  user1/repo1 user2/repo2 user3/repo3
 OPERATORS := openshift/dedicated-admin-operator openshift/configure-alertmanager-operator
 
+# What variables should be reset at the top of various loops? These are the
+# ones typically from `make env` that are evalled. 
+# Reset with $(call reset_vars)
+RESET_VARS := CREATE_OPERATOR_GROUP OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI
+
 .PHONY: default
 default: build
 
@@ -76,9 +81,14 @@ manifests/catalog: manifestdir catalog
 .PHONY: manifests/operators
 manifests/operators: manifestdir catalog
 	@for operatorrepo in $(OPERATORS) ; do \
+		$(call reset_vars) ;\
 		reponame="$$(echo $$operatorrepo | cut -d / -f 2-)" ; \
 		$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operator.yaml,manifests/10-$${reponame}.yaml); \
 		$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operator.selectorsyncset.yaml,manifests/hive/20-$${reponame}.selectorsyncset.yaml); \
+		eval $$($(MAKE) -C $(SOURCE_DIR)/$$reponame env --no-print-directory); \
+		if [[ "$$(echo x$${CREATE_OPERATOR_GROUP} | tr [:upper:] [:lower:])" != "xfalse" ]]; then \
+			$(call process_template,$(SOURCE_DIR)/$$reponame,scripts/templates/operatorgroup.yaml,manifests/15-$${reponame}.yaml); \
+		fi ;\
 	done
 
 .PHONY: manifests
@@ -97,7 +107,7 @@ operator-source:
 .PHONY: catalog
 catalog: manifestdir operator-source
 	@for operatorrepo in $(OPERATORS); do \
-		unset OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI ;\
+		$(call reset_vars) ;\
 		operator="$$(echo $$operatorrepo | cut -d / -f2)" ;\
 		echo "Building catalog for $$operator in $(SOURCE_DIR)/$$operator" ;\
 		eval $$($(MAKE) -C $(SOURCE_DIR)/$$operator env --no-print-directory); \
@@ -118,7 +128,7 @@ catalog: manifestdir operator-source
 .PHONY: check-operator-images
 check-operator-images: operator-source
 	@for operator in $(OPERATORS); do \
-		unset OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI ;\
+		$(call reset_vars) ;\
 		org="$$(echo $$operator | cut -d / -f 1)" ; \
 		reponame="$$(echo $$operator | cut -d / -f 2-)" ; \
 		eval $$($(MAKE) -C $(SOURCE_DIR)/$$reponame env --no-print-directory); \

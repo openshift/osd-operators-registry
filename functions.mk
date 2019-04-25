@@ -31,3 +31,9 @@ define process_template
         -e "s/\#OPERATOR_NAMESPACE\#/$${OPERATOR_NAMESPACE}/g" \
         $(2) > $(3)
 endef
+
+define reset_vars
+    for v in ${RESET_VARS}; do \
+        unset $${v} ;\
+    done
+endef
