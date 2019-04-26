@@ -14,8 +14,8 @@ import subprocess
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 7:
-        print("USAGE: %s OPERATOR_DIR OPERATOR_NAME OPERATOR_NAMESPACE OPERATOR_VERSION OPERATOR_IMAGE CHANNEL_NAME" % sys.argv[0])
+    if len(sys.argv) != 8:
+        print("USAGE: %s OPERATOR_DIR OPERATOR_NAME OPERATOR_NAMESPACE OPERATOR_VERSION OPERATOR_IMAGE CHANNEL_NAME MULTI_NAMESPACE" % sys.argv[0])
         sys.exit(1)
 
     operator_dir = sys.argv[1]
@@ -24,6 +24,8 @@ if __name__ == '__main__':
     operator_version = sys.argv[4]
     operator_image = sys.argv[5]
     channel_name = sys.argv[6]
+    # Coerce to a boolean
+    multi_namespace = sys.argv[7] == "true".lower()
 
     catalog_dir = os.path.join("catalog-manifests", operator_name)
 
@@ -147,6 +149,19 @@ if __name__ == '__main__':
     csv['spec']['version'] = operator_version
     if prev_csv != "__undefined__":
         csv['spec']['replaces'] = prev_csv
+
+    # adjust the install mode for multiple namespaces, if we need to
+    i = 0
+    found_multi_namespace = False
+    for m in csv['spec']['installModes']:
+        print("Looking for MultiNamespace, i = {} on = {}".format(i, m['type']))
+        if m['type'] == "MultiNamespace":
+            found_multi_namespace = True
+            break
+        i = i + 1
+    
+    if found_multi_namespace:
+        csv['spec']['installModes'][i]['supported'] = multi_namespace
 
     # Set the CSV createdAt annotation:
     now = datetime.datetime.now()

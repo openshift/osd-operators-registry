@@ -1,4 +1,4 @@
-SHELL := /usr/bin/env bash
+SHELL := /usr/bin/env bash -x
 
 # Include project specific values file
 # Requires the following variables:
@@ -47,7 +47,7 @@ OPERATORS := openshift/dedicated-admin-operator openshift/configure-alertmanager
 # What variables should be reset at the top of various loops? These are the
 # ones typically from `make env` that are evalled. 
 # Reset with $(call reset_vars)
-RESET_VARS := CREATE_OPERATOR_GROUP OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI
+RESET_VARS := CREATE_OPERATOR_GROUP OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI MULTI_NAMESPACE
 
 .PHONY: default
 default: build
@@ -69,6 +69,10 @@ isclean:
 .PHONY: manifestdir
 .SILENT: manifestdir
 manifestdir:
+	for operatorrepo in $(OPERATORS) ; do \
+		reponame="$$(echo $$operatorrepo | cut -d / -f 2-)" ; \
+		mkdir -p catalog-manifests/$$reponame ;\
+	done ;\
 	mkdir -p $(MANIFESTDIR)/hive
 
 # create CatalogSource yaml
@@ -106,7 +110,7 @@ operator-source:
 
 .PHONY: catalog
 catalog: manifestdir operator-source
-	@for operatorrepo in $(OPERATORS); do \
+	for operatorrepo in $(OPERATORS); do \
 		$(call reset_vars) ;\
 		operator="$$(echo $$operatorrepo | cut -d / -f2)" ;\
 		echo "Building catalog for $$operator in $(SOURCE_DIR)/$$operator" ;\
@@ -116,7 +120,15 @@ catalog: manifestdir operator-source
 			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
 			exit 3 ;\
 		else \
-			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) 1>/dev/null ;\
+			MULTI="$$(echo x$${MULTI_NAMESPACE} | tr [:upper:] [:lower:])" ;\
+			if [[ $$MULTI == "x" || $$MULTI == "xfalse" ]]; then \
+				MULTI_NAMESPACE="false" ;\
+			else \
+				echo "MULTI_NAMESPACE was $$MULTI_NAMESPACE for $${operator}, resetting to true for safety" ;\
+				MULTI_NAMESPACE="true" ;\
+			fi ;\
+			unset MULTI ;\
+			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) $$MULTI_NAMESPACE 1>/dev/null ;\
 			if [[ $$? -ne 0 ]]; then \
 				echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" ;\
 				rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION ;\
