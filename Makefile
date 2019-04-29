@@ -47,7 +47,7 @@ OPERATORS := openshift/dedicated-admin-operator openshift/configure-alertmanager
 # What variables should be reset at the top of various loops? These are the
 # ones typically from `make env` that are evalled. 
 # Reset with $(call reset_vars)
-RESET_VARS := CREATE_OPERATOR_GROUP OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI
+RESET_VARS := CREATE_OPERATOR_GROUP OPERATOR_NAME OPERATOR_VERSION OPERATOR_NAMESPACE OPERATOR_IMAGE_URI MULTI_NAMESPACE
 
 .PHONY: default
 default: build
@@ -69,6 +69,10 @@ isclean:
 .PHONY: manifestdir
 .SILENT: manifestdir
 manifestdir:
+	for operatorrepo in $(OPERATORS) ; do \
+		reponame="$$(echo $$operatorrepo | cut -d / -f 2-)" ; \
+		mkdir -p catalog-manifests/$$reponame ;\
+	done ;\
 	mkdir -p $(MANIFESTDIR)/hive
 
 # create CatalogSource yaml
@@ -116,7 +120,16 @@ catalog: manifestdir operator-source
 			$(MAKE) -C $(SOURCE_DIR)/$$operator env ; \
 			exit 3 ;\
 		else \
-			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) 1>/dev/null ;\
+			MULTI="$$(echo x$${MULTI_NAMESPACE} | tr [:upper:] [:lower:])" ;\
+			if [[ $$MULTI == "xtrue" ]]; then \
+				echo "MULTI_NAMESPACE was $$MULTI_NAMESPACE for $${operator}, resetting to true for safety" ;\
+				MULTI_NAMESPACE="true" ;\
+			else \
+				echo "Found non-true value for MULTI_NAMESPACE ($$MULTI_NAMESPACE), resetting to false for safety" ;\
+				MULTI_NAMESPACE="false" ;\
+			fi ;\
+			unset MULTI ;\
+			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) $$MULTI_NAMESPACE 1>/dev/null ;\
 			if [[ $$? -ne 0 ]]; then \
 				echo "Failed to generate, cleaning up catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION" ;\
 				rm -rf catalog-manifests/$$OPERATOR_NAME/$$OPERATOR_VERSION ;\
