@@ -1,4 +1,4 @@
-SHELL := /usr/bin/env bash -x
+SHELL := /usr/bin/env bash
 
 # Include project specific values file
 # Requires the following variables:
@@ -110,7 +110,7 @@ operator-source:
 
 .PHONY: catalog
 catalog: manifestdir operator-source
-	for operatorrepo in $(OPERATORS); do \
+	@for operatorrepo in $(OPERATORS); do \
 		$(call reset_vars) ;\
 		operator="$$(echo $$operatorrepo | cut -d / -f2)" ;\
 		echo "Building catalog for $$operator in $(SOURCE_DIR)/$$operator" ;\
