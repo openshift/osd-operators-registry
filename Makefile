@@ -121,11 +121,12 @@ catalog: manifestdir operator-source
 			exit 3 ;\
 		else \
 			MULTI="$$(echo x$${MULTI_NAMESPACE} | tr [:upper:] [:lower:])" ;\
-			if [[ $$MULTI == "x" || $$MULTI == "xfalse" ]]; then \
-				MULTI_NAMESPACE="false" ;\
-			else \
+			if [[ $$MULTI == "xtrue" ]]; then \
 				echo "MULTI_NAMESPACE was $$MULTI_NAMESPACE for $${operator}, resetting to true for safety" ;\
 				MULTI_NAMESPACE="true" ;\
+			else \
+				echo "Found non-true value for MULTI_NAMESPACE ($$MULTI_NAMESPACE), resetting to false for safety" ;\
+				MULTI_NAMESPACE="false" ;\
 			fi ;\
 			unset MULTI ;\
 			./scripts/gen_operator_csv.py $(SOURCE_DIR)/$$operator $$OPERATOR_NAME $$OPERATOR_NAMESPACE $$OPERATOR_VERSION $$OPERATOR_IMAGE_URI $(CHANNEL) $$MULTI_NAMESPACE 1>/dev/null ;\
