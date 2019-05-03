@@ -18,7 +18,7 @@ spec:
       name: osd-operators-registry
       namespace: openshift-operator-lifecycle-manager
     spec:
-      image: quay.io/openshift-sre/osd-operators-registry:master-8d66d057e94cae5b43899a73809d3c52
+      image: quay.io/openshift-sre/osd-operators-registry:master-a979b81f148f5a03904703dbc99bf0e8
       displayName: OSD Operators
       icon:
         base64data: ""

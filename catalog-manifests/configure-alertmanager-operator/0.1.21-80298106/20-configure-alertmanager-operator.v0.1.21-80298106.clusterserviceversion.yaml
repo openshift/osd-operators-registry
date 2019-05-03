@@ -1,0 +1,82 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    categories: A list of comma separated categories that your operator falls under.
+    certified: 'false'
+    containerImage: null
+    createdAt: '2019-05-03T07:24:47Z'
+    description: OpenShift cluster provisioning and management at scale.
+    support: OSD SRE
+  containerImage: quay.io/openshift-sre/configure-alertmanager-operator:v0.1.21-80298106
+  name: configure-alertmanager-operator.v0.1.21-80298106
+  namespace: openshift-monitoring
+spec:
+  description: SRE operator - configure-alertmanager-operator
+  displayName: configure-alertmanager-operator
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - ''
+          attributeRestrictions: null
+          resources:
+          - secrets
+          verbs:
+          - get
+          - list
+          - watch
+          - patch
+          - update
+        serviceAccountName: configure-alertmanager-operator
+      deployments:
+      - name: configure-alertmanager-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: configure-alertmanager-operator
+          template:
+            metadata:
+              labels:
+                name: configure-alertmanager-operator
+            spec:
+              containers:
+              - command:
+                - configure-alertmanager-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: configure-alertmanager-operator
+                image: quay.io/openshift-sre/configure-alertmanager-operator:v0.1.21-80298106
+                imagePullPolicy: Always
+                name: configure-alertmanager-operator
+              serviceAccountName: configure-alertmanager-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: true
+    type: MultiNamespace
+  - supported: false
+    type: AllNamespaces
+  keywords:
+  - kubernetes
+  - openshift
+  - multi-cluster
+  - cluster
+  maturity: alpha
+  provider:
+    name: Red Hat, Inc
+  replaces: configure-alertmanager-operator.v0.1.16-a44152e3
+  version: 0.1.21-80298106

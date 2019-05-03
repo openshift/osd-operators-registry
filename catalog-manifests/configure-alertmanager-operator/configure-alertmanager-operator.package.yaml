@@ -1,4 +1,4 @@
 channels:
-- currentCSV: configure-alertmanager-operator.v0.1.16-a44152e3
+- currentCSV: configure-alertmanager-operator.v0.1.21-80298106
   name: master
 packageName: configure-alertmanager-operator
