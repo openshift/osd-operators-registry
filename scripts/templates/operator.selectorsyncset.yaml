@@ -13,10 +13,10 @@ spec:
     kind: Namespace
     metadata:
       name: #OPERATOR_NAMESPACE#
-    annotations:
-      openshift.io/node-selector: ""
-    labels:
-      openshift.io/cluster-monitoring: "true"
+      annotations:
+        openshift.io/node-selector: ""
+      labels:
+        openshift.io/cluster-monitoring: "true"
   - apiVersion: operators.coreos.com/v1alpha2
     kind: OperatorGroup
     metadata:
